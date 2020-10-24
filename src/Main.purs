@@ -19,6 +19,7 @@ import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Class.Console (log)
 import NewSyntax.Force as Force
+import NewSyntax.Join as NewJoin
 import NewSyntax.Tree as Tree
 import Web.HTML (window)
 import Web.HTML.Window (innerHeight, innerWidth)
@@ -41,8 +42,13 @@ forceInterpreter forceChart = do
 
 main :: Effect Unit
 main = launchAff_ do -- Aff
-  log "v3"
-  pure $ WrappedJoin.chart (Tuple 500 500)
+  log "v4"
+  --pure $ WrappedJoin.chart (Tuple 500 500)
+  let joinChart = NewJoin.chart (Tuple 500.0 500.0)
+
+  liftEffect $ runStateT (interpretSelection joinChart) (Context "xyz" initialScope) *> pure unit
+
+
   {-
   widthHeight    <- liftEffect getWindowWidthHeight
   -- two examples so we'll give them each half the window height
