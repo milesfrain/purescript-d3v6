@@ -5,6 +5,7 @@ import Prelude
 import Affjax (get) as AJAX
 import Affjax (printError)
 import Affjax.ResponseFormat as ResponseFormat
+import Control.Monad.Rec.Class (forever)
 import Control.Monad.State (StateT, runStateT)
 import D3.Base (Selection)
 import D3.Example.Force as WrappedForce
@@ -17,15 +18,15 @@ import Data.Int (toNumber)
 import Data.String.CodeUnits (fromCharArray, toCharArray)
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
-import Effect.Aff (launchAff_)
+import Effect.Aff (Milliseconds(..), delay, forkAff, launchAff_)
 import Effect.Class (liftEffect)
-import Effect.Class.Console (log)
+import Effect.Class.Console (log, logShow)
 import Effect.Random (randomInt)
 import NewSyntax.Force as Force
 import NewSyntax.Join as NewJoin
 import NewSyntax.Tree as Tree
 import Random.LCG (randomSeed)
-import Test.QuickCheck.Gen (Gen, evalGen, shuffle)
+import Test.QuickCheck.Gen (evalGen, shuffle)
 import Web.HTML (window)
 import Web.HTML.Window (innerHeight, innerWidth)
 
@@ -53,21 +54,26 @@ randomLetters = do
   let shuffled = evalGen shuffler { newSeed : seed, size: 1 }
   num <- randomInt 0 20
   let numDraw = 6 + num
-  let drawn = take numDraw shuffled :: Array Char
+  let drawn = take numDraw shuffled
   pure $ fromCharArray drawn
 
 main :: Effect Unit
 main = launchAff_ do -- Aff
   log "v4"
 
-  let joinChart = NewJoin.chart (Tuple 500.0 500.0)
-
+  -- Original, wrapped JS version for comparison
   --pure $ WrappedJoin.chart (Tuple 500 500)
 
-  letters <- liftEffect randomLetters
-  liftEffect $ runStateT (interpretSelection joinChart) (Context letters initialScope) *> pure unit
+  fiber <- forkAff $ forever do
+    letters <- liftEffect randomLetters
+    logShow letters
 
+    let joinChart = NewJoin.chart (Tuple 500.0 500.0)
+    liftEffect $ runStateT (interpretSelection joinChart) (Context letters initialScope) *> pure unit
 
+    delay $ Milliseconds 1000.0
+
+  log "done"
   {-
   widthHeight    <- liftEffect getWindowWidthHeight
   -- two examples so we'll give them each half the window height
