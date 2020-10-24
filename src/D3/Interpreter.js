@@ -7,7 +7,7 @@ exports.runSimpleAttrJS = selection => attr => value => selection.attr(attr, val
 // :: forall f. NativeSelection -> String -> f -> Unit
 exports.runDatumAttrJS = selection => attr => f => selection.attr(attr, f)
 // :: forall f. NativeSelection -> String -> f -> Unit
-exports.runDatumIndexAttrJS = selection => attr => f => selection.attr(attr, d => i => f(d)(i))
+exports.runDatumIndexAttrJS = selection => attr => f => selection.attr(attr, (d, i) => f(d)(i))
 // foreign import runDatumTextJS      :: forall f. NativeSelection           -> f -> Unit
 exports.runDatumTextJS = selection => f => selection.text(f)
 
@@ -18,7 +18,7 @@ exports.d3SelectAllJS = selector => d3.selectAll(selector)
 exports.d3AppendElementJS = selection => element => selection.append(element)
 // :: forall d. d -> NativeSelection
 exports.d3JoinJS = selection => element => data => selection.selectAll(element).data(data).enter()
-// could we get the join.enter, join.update, join.exit selections out of this in order to simply 
+// could we get the join.enter, join.update, join.exit selections out of this in order to simply
 // attach the append normally later??
 exports.d3JoinWithIndexJS = selection => data => idFunction => selection.data(data, idFunction)
 // :: NativeSelection
@@ -35,12 +35,12 @@ exports.initSimulationJS = config => {
             .velocityDecay(config.velocityDecay) // default is 0.4
 }
 //  :: Simulation -> Array NativeNode -> Array NativeNode
-exports.putNodesInSimulationJS = simulation => nodes => { 
+exports.putNodesInSimulationJS = simulation => nodes => {
   simulation.nodes(nodes)
   return nodes
 }
 //  :: Simulation -> Array NativeLink -> Array NativeLink
-exports.putLinksInSimulationJS = simulation => links => { 
+exports.putLinksInSimulationJS = simulation => links => {
   simulation.force("links", d3.forceLink(links).id(d => d.id))
   return links
 }
@@ -54,42 +54,42 @@ exports.stopSimulationJS = simulation => simulation.stop()
 var tickAttrArray = [] // TODO probably want API to reset this too, but defer til adding named tick functions
 exports.addAttrFnToTickJS = selection => pursAttr => {
   tickAttrArray.push({ selection: selection, attr: pursAttr.value0, fn: pursAttr.value1 })
-} 
+}
 // assumes we've already put all the things we want to happen into the tickAttrArray
 exports.attachTickFnToSimulationJS = simulation => simulation.on("tick", () => {
   tickAttrArray.forEach(element => (element.selection).attr(element.attr, element.fn))
 })
 // default drag function, useful in probably most simulations
 exports.attachDefaultDragBehaviorJS = selection => simulation => {
-  
+
   var drag = function(simulation) {
     function dragstarted(event, d) {
       if (!event.active) simulation.alphaTarget(0.3).restart();
       d.fx = d.x;
       d.fy = d.y;
     }
-    
+
     function dragged(event,d) {
       d.fx = event.x;
       d.fy = event.y;
     }
-    
+
     function dragended(event,d) {
       if (!event.active) simulation.alphaTarget(0);
       d.fx = null;
       d.fy = null;
     }
-    
+
     return d3.drag()
         .on("start", dragstarted)
         .on("drag", dragged)
-        .on("end", dragended);  
+        .on("end", dragended);
   }
 
   selection.call(drag(simulation))
 }
 
-//            FORCE functions 
+//            FORCE functions
 // :: Simulation -> Unit
 exports.forceManyJS = simulation => label => simulation.force(label, d3.forceManyBody())
 // :: Simulation -> Number -> Number -> Unit
