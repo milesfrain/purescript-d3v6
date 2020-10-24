@@ -10,17 +10,22 @@ import D3.Base (Selection)
 import D3.Example.Force as WrappedForce
 import D3.Example.Join as WrappedJoin
 import D3.Interpreter (D3State(..), initialScope, interpretSelection, interpretSimulation, interpretTickMap, interpretDrag, startSimulation)
+import Data.Array (take)
 import Data.Bifunctor (rmap)
 import Data.Either (Either(..))
 import Data.Int (toNumber)
+import Data.String.CodeUnits (fromCharArray, toCharArray)
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Class.Console (log)
+import Effect.Random (randomInt)
 import NewSyntax.Force as Force
 import NewSyntax.Join as NewJoin
 import NewSyntax.Tree as Tree
+import Random.LCG (randomSeed)
+import Test.QuickCheck.Gen (Gen, evalGen, shuffle)
 import Web.HTML (window)
 import Web.HTML.Window (innerHeight, innerWidth)
 
@@ -40,14 +45,27 @@ forceInterpreter forceChart = do
   startSimulation simulation
 
 
+-- Todo, change from String to Array Char
+randomLetters :: Effect String
+randomLetters = do
+  let shuffler = "abcdefghijklmnopqrstuvwxyz" # toCharArray # shuffle
+  seed <- randomSeed
+  let shuffled = evalGen shuffler { newSeed : seed, size: 1 }
+  num <- randomInt 0 20
+  let numDraw = 6 + num
+  let drawn = take numDraw shuffled :: Array Char
+  pure $ fromCharArray drawn
+
 main :: Effect Unit
 main = launchAff_ do -- Aff
   log "v4"
+
   let joinChart = NewJoin.chart (Tuple 500.0 500.0)
 
   --pure $ WrappedJoin.chart (Tuple 500 500)
 
-  liftEffect $ runStateT (interpretSelection joinChart) (Context "xyz" initialScope) *> pure unit
+  letters <- liftEffect randomLetters
+  liftEffect $ runStateT (interpretSelection joinChart) (Context letters initialScope) *> pure unit
 
 
   {-

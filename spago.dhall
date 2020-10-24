@@ -15,6 +15,7 @@ You can edit this file as you like.
   , "lists"
   , "nullable"
   , "psci-support"
+  , "quickcheck"
   , "web-events"
   , "web-html"
   ]
