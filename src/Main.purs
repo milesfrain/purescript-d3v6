@@ -43,8 +43,9 @@ forceInterpreter forceChart = do
 main :: Effect Unit
 main = launchAff_ do -- Aff
   log "v4"
-  --pure $ WrappedJoin.chart (Tuple 500 500)
   let joinChart = NewJoin.chart (Tuple 500.0 500.0)
+
+  --pure $ WrappedJoin.chart (Tuple 500 500)
 
   liftEffect $ runStateT (interpretSelection joinChart) (Context "xyz" initialScope) *> pure unit
 

@@ -21,19 +21,22 @@ d3MyLetter :: Datum -> D3MyLetter
 d3MyLetter = unsafeCoerce
 -}
 
+-- Placeholder in case we need FFI later
 foreign import unused :: Number
-
-dataToModel :: Datum -> Model
-dataToModel = unsafeCoerce
-
-modelToSubModel :: Model -> SubModel
-modelToSubModel = toCharArray >>> unsafeCoerce
 
 -- Model is just a String
 type Model = String
 
-initialModel :: String
-initialModel = "abcd"
+dataToModel :: Datum -> Model
+dataToModel = unsafeCoerce
+
+-- If I want indicies in my Datum, do I need to pass
+-- those to SubModel, or are they added automatically later?
+modelToSubModel :: Model -> SubModel
+modelToSubModel = toCharArray >>> unsafeCoerce
+
+datumToChar :: Datum -> String
+datumToChar = unsafeCoerce
 
 chart :: Tuple Number Number -> Selection Model
 chart (Tuple width height) =
@@ -43,8 +46,8 @@ chart (Tuple width height) =
       appendNamed "svg" Svg [ viewBox 0.0 (-20.0) width 33.0 ]
         [ join Text modelToSubModel
           (append Text
-            [ NumberAttr "x" (const 5.0) --todo_i16
-            , TextAttr (const "F") --identity
+            [ NumberAttrI "x" (\_ i -> i * 16.0)
+            , TextAttr datumToChar
             ]
             noChildren
           )
